@@ -1,0 +1,8 @@
+com/research/staticanalysis/Main.class
+com/research/staticanalysis/analyzer/InterferenceEngine.class
+com/research/staticanalysis/model/EntityUsage.class
+com/research/staticanalysis/model/Endpoint.class
+com/research/staticanalysis/analyzer/RepositoryAnalyzer.class
+com/research/staticanalysis/model/RaceCandidate.class
+com/research/staticanalysis/analyzer/EndpointAnalyzer.class
+com/research/staticanalysis/sarif/SarifGenerator.class

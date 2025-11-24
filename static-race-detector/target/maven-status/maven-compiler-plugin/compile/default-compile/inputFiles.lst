@@ -1,0 +1,8 @@
+/Users/rutul/Documents/Race_Finder/static-race-detector/src/main/java/com/research/staticanalysis/Main.java
+/Users/rutul/Documents/Race_Finder/static-race-detector/src/main/java/com/research/staticanalysis/analyzer/EndpointAnalyzer.java
+/Users/rutul/Documents/Race_Finder/static-race-detector/src/main/java/com/research/staticanalysis/analyzer/InterferenceEngine.java
+/Users/rutul/Documents/Race_Finder/static-race-detector/src/main/java/com/research/staticanalysis/analyzer/RepositoryAnalyzer.java
+/Users/rutul/Documents/Race_Finder/static-race-detector/src/main/java/com/research/staticanalysis/model/Endpoint.java
+/Users/rutul/Documents/Race_Finder/static-race-detector/src/main/java/com/research/staticanalysis/model/EntityUsage.java
+/Users/rutul/Documents/Race_Finder/static-race-detector/src/main/java/com/research/staticanalysis/model/RaceCandidate.java
+/Users/rutul/Documents/Race_Finder/static-race-detector/src/main/java/com/research/staticanalysis/sarif/SarifGenerator.java
