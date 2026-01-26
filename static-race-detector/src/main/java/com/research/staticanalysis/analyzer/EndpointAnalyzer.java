@@ -1,18 +1,20 @@
 package com.research.staticanalysis.analyzer;
 
+import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.MethodCallExpr;
-import com.github.javaparser.resolution.declarations.ResolvedMethodDeclaration;
-import com.github.javaparser.utils.SourceRoot;
 import com.research.staticanalysis.model.Endpoint;
 import com.research.staticanalysis.model.EntityUsage;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public class EndpointAnalyzer {
 
@@ -24,15 +26,18 @@ public class EndpointAnalyzer {
 
     public List<Endpoint> analyze(File root) {
         List<Endpoint> endpoints = new ArrayList<>();
-        SourceRoot sourceRoot = new SourceRoot(root.toPath());
+        System.out.println("Scanning for Endpoints in: " + root.getAbsolutePath());
 
-        try {
-            sourceRoot.parse("", (localPath, absolutePath, result) -> {
-                if (result.isSuccessful() && result.getResult().isPresent()) {
-                    findEndpoints(result.getResult().get(), endpoints);
-                }
-                return SourceRoot.Callback.Result.DONT_SAVE;
-            });
+        try (Stream<Path> paths = Files.walk(root.toPath())) {
+            paths.filter(p -> p.toString().endsWith(".java"))
+                .forEach(path -> {
+                     try {
+                         CompilationUnit cu = StaticJavaParser.parse(path);
+                         findEndpoints(cu, endpoints);
+                     } catch (Exception e) {
+                         // Ignore parsing errors
+                     }
+                 });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -41,8 +46,10 @@ public class EndpointAnalyzer {
 
     private void findEndpoints(CompilationUnit cu, List<Endpoint> endpoints) {
         cu.findAll(ClassOrInterfaceDeclaration.class).forEach(cid -> {
-            // Basic heuristic: Look for Spring Controllers
-            if (cid.getAnnotationByName("RestController").isPresent() || cid.getAnnotationByName("Controller").isPresent()) {
+            // Check for Controller annotations
+            if (cid.getAnnotationByName("RestController").isPresent() || 
+                cid.getAnnotationByName("Controller").isPresent()) {
+                
                 cid.getMethods().forEach(method -> {
                     if (isRequestMapping(method)) {
                         Endpoint endpoint = new Endpoint();
@@ -50,11 +57,11 @@ public class EndpointAnalyzer {
                         endpoint.setMethodName(method.getNameAsString());
                         endpoint.setHttpPath(extractPath(method));
                         
-                        // Deep analysis of the method body to find repository calls
                         traceMethodCalls(method, endpoint);
                         
                         if (!endpoint.getUsages().isEmpty()) {
                             endpoints.add(endpoint);
+                            System.out.println("  " + endpoint.getMethodName() + " accesses " + endpoint.getUsages().size() + " entities.");
                         }
                     }
                 });
@@ -71,38 +78,31 @@ public class EndpointAnalyzer {
     }
 
     private String extractPath(MethodDeclaration method) {
-        // Simplified path extraction - usually requires parsing annotation attributes
         return "/api/unknown"; 
     }
 
     private void traceMethodCalls(MethodDeclaration method, Endpoint endpoint) {
         method.findAll(MethodCallExpr.class).forEach(call -> {
             try {
-                // This is where JavaSymbolSolver is magic: it finds the TYPE of the variable being called
-                // Note: In a real complex project, we might need deeper recursion into Services.
-                // For this Phase 1, we check if the call is directly on a Repository interface.
-                
-                // Heuristic fallback if symbol solver fails (common in incomplete classpaths)
                 String scopeName = call.getScope().map(Object::toString).orElse("");
                 String methodName = call.getNameAsString();
 
-                // Check against our Data Map
-                // We check if the variable name roughly matches a known repository (e.g., "orderRepository")
-                // OR if we can resolve the type properly.
                 for (Map.Entry<String, String> entry : dataMap.entrySet()) {
                     String repoName = entry.getKey();
                     String entityName = entry.getValue();
 
-                    // Simple matching: if variable is 'orderRepository' or type is 'OrderRepository'
-                    if (scopeName.toLowerCase().contains(repoName.toLowerCase())) {
-                        boolean isWrite = methodName.startsWith("save") || methodName.startsWith("delete") || methodName.startsWith("update");
+                    // Heuristic: Match variable name (e.g. "orderRepository") to Class Name ("OrderRepository")
+                    // This handles the case where we assume variable names match types slightly loosely
+                    if (scopeName.toLowerCase().contains(repoName.toLowerCase().replace("repository", ""))) {
+                        boolean isWrite = methodName.startsWith("save") || 
+                                          methodName.startsWith("delete") ||
+                                          methodName.startsWith("update") ||
+                                          methodName.startsWith("insert");
+                        
                         endpoint.addUsage(new EntityUsage(entityName, isWrite? "WRITE" : "READ", call.getBegin().get().line));
                     }
                 }
-                
-            } catch (Exception e) {
-                // Symbol solver exceptions are common in static analysis
-            }
+            } catch (Exception e) { }
         });
     }
 }

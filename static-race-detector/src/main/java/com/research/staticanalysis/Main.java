@@ -1,3 +1,5 @@
+// mvn clean package
+// java -jar target/static-race-detector-1.0-SNAPSHOT.jar ./train-ticket
 package com.research.staticanalysis;
 
 import com.github.javaparser.StaticJavaParser;
@@ -13,7 +15,6 @@ import com.research.staticanalysis.sarif.SarifGenerator;
 import picocli.CommandLine;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -24,7 +25,8 @@ public class Main implements Callable<Integer> {
     @CommandLine.Parameters(index = "0", description = "Root directory of the microservices source code.")
     private File sourceRoot;
 
-    public static void main(String args) {
+    // --- FIX IS HERE: Added to String args ---
+    public static void main(String[] args) {
         int exitCode = new CommandLine(new Main()).execute(args);
         System.exit(exitCode);
     }
@@ -34,11 +36,9 @@ public class Main implements Callable<Integer> {
         System.out.println("Phase 1: Initializing 'Method of Maps' Static Analysis...");
         System.out.println("Source Root: " + sourceRoot.getAbsolutePath());
 
-        // 1. Configure Symbol Solver (The "Brain" that understands types)
+        // 1. Configure Symbol Solver
         CombinedTypeSolver combinedSolver = new CombinedTypeSolver();
-        combinedSolver.add(new ReflectionTypeSolver()); // JDK classes
-        // We assume a standard Maven multi-module layout, so we add the root
-        // In a real scenario, we might iterate subdirectories to find src/main/java
+        combinedSolver.add(new ReflectionTypeSolver());
         combinedSolver.add(new JavaParserTypeSolver(sourceRoot)); 
         
         JavaSymbolSolver symbolSolver = new JavaSymbolSolver(combinedSolver);
