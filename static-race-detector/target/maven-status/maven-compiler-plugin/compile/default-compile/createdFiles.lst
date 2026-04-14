@@ -1,8 +1,14 @@
-com/research/staticanalysis/Main.class
-com/research/staticanalysis/analyzer/InterferenceEngine.class
 com/research/staticanalysis/model/EntityUsage.class
 com/research/staticanalysis/model/Endpoint.class
 com/research/staticanalysis/analyzer/RepositoryAnalyzer.class
 com/research/staticanalysis/model/RaceCandidate.class
+com/research/staticanalysis/model/RaceCandidate$RaceType.class
+com/research/staticanalysis/analyzer/DistributedLockAnalyzer.class
+com/research/staticanalysis/model/RaceCandidate$ProtectionStatus.class
+com/research/staticanalysis/Main.class
+com/research/staticanalysis/analyzer/InterferenceEngine.class
+com/research/staticanalysis/analyzer/ServiceAnalyzer.class
 com/research/staticanalysis/analyzer/EndpointAnalyzer.class
 com/research/staticanalysis/sarif/SarifGenerator.class
+com/research/staticanalysis/analyzer/AsyncBoundaryAnalyzer.class
+com/research/staticanalysis/model/EntityUsage$AccessType.class
