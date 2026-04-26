@@ -1,20 +1,3 @@
-#!/usr/bin/env python3
-"""
-filter_races.py — LLM-based false-positive filter for static race detector output.
-
-Backend : GitHub Models API (free, OpenAI-compatible, no Ollama needed)
-Model   : Meta-Llama-3.1-8B-Instruct  (lightweight, fast, low-tier rate limit)
-Strategy: Group 604 races by entity (→ ~23 groups), batch each group in chunks
-          of max 12 races per API call → ~30-50 total API calls, well under
-          the 150 req/day free limit.
-
-Usage:
-  export GITHUB_TOKEN=ghp_xxxxxxxxxxxx
-  python filter_races.py race-report.sarif
-  python filter_races.py race-report.sarif --severity CRITICAL --top-n 50
-  python filter_races.py race-report.sarif --source-root ./examples/train-ticket
-"""
-
 import os
 import sys
 import argparse
@@ -25,7 +8,7 @@ from sarif_parser import parse_sarif, group_by_entity, severity
 from github_client import GitHubModelsClient, PREFERRED_MODELS
 from report_writer import write_all
 
-BATCH_SIZE = 12   # races per API call — keeps prompts tiny
+BATCH_SIZE = 10   # races per API call — keeps prompts tiny
 
 
 def pick_model(args_model: str | None) -> str:
@@ -63,10 +46,9 @@ def main():
     parser.add_argument("--report", default="race-analysis-report.md")
     args = parser.parse_args()
 
-    print("╔════════════════════════════════════════════════════════╗")
-    print("║    LLM Race Filter  —  GitHub Models Backend           ║")
-    print("║    Model: lightweight open models, free tier           ║")
-    print("╚════════════════════════════════════════════════════════╝\n")
+    print("╔═════════════════════════════════════════════════════════════╗")
+    print("║    LLM Race Filter  —  Parsing the races in sarif           ║")
+    print("╚═════════════════════════════════════════════════════════════╝\n")
 
     # --- Auth ---
     token = args.token or os.environ.get("GITHUB_TOKEN", "")
@@ -98,9 +80,7 @@ def main():
         print(f"  Limited to top-N     : {len(races)}")
 
     est = estimate_calls(races)
-    print(f"\n  Grouped into {len(group_by_entity(races))} entity groups")
-    print(f"  Estimated API calls  : {est}  (free limit: 150/day)")
-    print(f"  Estimated time       : ~{est * 5 // 60}m {est * 5 % 60}s\n")
+
 
     if est > 140:
         print("⚠  Warning: This may approach the daily limit.")
@@ -150,7 +130,7 @@ def main():
             ep2 = r.race["endpoint2"].split("(")[-1].rstrip(")")
             print(f"  {i:2}. [{sev}] {r.race['entity']}  risk={r.risk_score}/10")
             print(f"      {ep1} ↔ {ep2}")
-            print(f"      → {r.justification[:80]}")
+            print(f"      → {getattr(r, 'justification', 'No justification provided')[:80]}")
 
     # --- Write outputs ---
     write_all(all_results, args.output, args.report)

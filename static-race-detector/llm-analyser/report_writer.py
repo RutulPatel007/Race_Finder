@@ -62,7 +62,7 @@ def _write_md(results: list, path: str):
                 f"- **Endpoint 1:** `{r.race['endpoint1']}`",
                 f"- **Endpoint 2:** `{r.race['endpoint2']}`",
                 f"- **File:** `{r.race['file1']}` line {r.race['line1']}",
-                f"- **Why it's real:** {r.justification}",
+               "justification": getattr(r, "justification", "No justification provided"),
                 "",
             ]
     else:
@@ -73,7 +73,7 @@ def _write_md(results: list, path: str):
         sev = severity(r.race)
         ep1 = r.race["endpoint1"].split("(")[-1].rstrip(")")
         ep2 = r.race["endpoint2"].split("(")[-1].rstrip(")")
-        lines.append(f"- `{r.race['entity']}` [{sev}] `{ep1}` ↔ `{ep2}` — *{r.justification}*")
+        lines.append(f"- `{r.race['entity']}` [{sev}] `{ep1}` ↔ `{ep2}` — *{getattr(r, "justification", "No justification provided")}*")
     if not unc:
         lines.append("*None.*")
 
@@ -81,7 +81,7 @@ def _write_md(results: list, path: str):
     for r in fp:
         ep1 = r.race["endpoint1"].split("(")[-1].rstrip(")")
         ep2 = r.race["endpoint2"].split("(")[-1].rstrip(")")
-        lines.append(f"- ~~`{r.race['entity']}`~~ `{ep1}` ↔ `{ep2}` — *{r.justification}*")
+        lines.append(f"- ~~`{r.race['entity']}`~~ `{ep1}` ↔ `{ep2}` — *{getattr(r, "justification", "No justification provided")}*")
     if not fp:
         lines.append("*None.*")
 

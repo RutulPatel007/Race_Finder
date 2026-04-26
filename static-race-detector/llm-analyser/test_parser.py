@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-"""
-test_parser.py — Validates SARIF parsing without any API calls.
-Run this first to make sure your SARIF is read correctly.
-
-Usage:
-    python test_parser.py race-report.sarif
-"""
 import sys
 import json
 from collections import Counter
